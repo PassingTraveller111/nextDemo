@@ -138,7 +138,7 @@ export default function Post() {
 
 访问`http://localhost:3001/any-id`
 
-![image-20240911103550080](/Users/liujingmin/Desktop/project/next/demo/img/17.png)
+![](img/17.png)
 
 但是如果我们访问`pages/a`，还是会访问a.js，而非得到Post ID：a。由此可以得出结论，文件系统路由的优先级在动态路由之上。
 
