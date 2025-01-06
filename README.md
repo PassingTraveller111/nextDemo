@@ -87,13 +87,13 @@ npm run dev -- -p {指定端口号}
 
 比如我指定在端口3001启动项目
 
-![image-20240910154307937](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240910154307937.png)
+![](img/14.png)
 
 ## 访问页面
 
 浏览器访问`http://localhost:3001`
 
-![image-20240910154425878](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240910154425878.png)
+![](img/15.png)
 
 
 
@@ -122,7 +122,7 @@ Next.js采用文件系统路由，`pages`目录下的每个React组件文件都�
 
 Next.js 支持通过文件名 `[param].js` 创建动态路由。例如，要创建一个可以匹配任何 ID 的动态页面，你可以创建 `pages/[id].js`
 
-![image-20240911103940001](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240911103940001.png)
+![](img/16.png)
 
 ```jsx
 import React from 'react';  
@@ -138,11 +138,11 @@ export default function Post() {
 
 访问`http://localhost:3001/any-id`
 
-![image-20240911103550080](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240911103550080.png)
+![image-20240911103550080](/Users/liujingmin/Desktop/project/next/demo/img/17.png)
 
 但是如果我们访问`pages/a`，还是会访问a.js，而非得到Post ID：a。由此可以得出结论，文件系统路由的优先级在动态路由之上。
 
-![image-20240911103703560](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240911103703560.png)
+![](img/18.png)
 
 ## Next如何进行路由导航？
 
@@ -150,7 +150,7 @@ export default function Post() {
 
 `next/link` 组件允许你在 Next.js 应用中进行客户端路由导航，而不需要刷新页面，下面我们创建一个`Nav`组件，并且在index中引用它。
 
-![image-20240911112227121](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240911112227121.png)
+![](img/19.png)
 
 ```jsx
 import React from 'react';  
@@ -188,7 +188,7 @@ export default () => {
 
 点击即可实现跳转
 
-![image-20240911112317435](/Users/liujingmin/Library/Application Support/typora-user-images/image-20240911112317435.png)
+![image-20240911112317435](img/20.png)
 
 ### 2.使用`useRouter `Hook
 
@@ -504,7 +504,7 @@ export default () => {
 
 比如我现在尝试在nav组件中直接引入`nav.scss`，就会出现如下报错。
 
-![](/Users/liujingmin/Desktop/README/img/5.png)
+![](img/5.png)
 
 那么我如果想在组件内单独使用样式，就只能使用局部样式了。
 
@@ -546,7 +546,7 @@ export default () => {
 
 可以看到，样式被成功添加，并且通过module添加的样式也多了一串哈希值用于避免冲突
 
-![](/Users/liujingmin/Desktop/README/img/6.png)
+![](img/6.png)
 
 # 五、Next与状态管理（Redux）
 
@@ -569,7 +569,7 @@ export default () => {
 - index文件下进行store的创建
 - provider文件创建了一个provider组件，用于注入store
 
-![](/Users/liujingmin/Desktop/README/img/4.png)
+![](img/4.png)
 
 ## 3. 创建action
 
@@ -766,7 +766,7 @@ export default function handler(req, res) {
 
 下面，我们用浏览器访问`localhost:3000/api/getRandomImg`
 
-![QQ_1735635692179](/Users/liujingmin/Desktop/README/img/1.png)
+![QQ_1735635692179](img/1.png)
 
 可以看到，接口返回了一张图片的地址。
 
@@ -809,7 +809,7 @@ export default () => {
 
 查看页面请求，可以发现，浏览器调用了`getRandomImg`
 
-![](/Users/liujingmin/Desktop/README/img/2.png)
+![](img/2.png)
 
 ## 服务端调用
 
@@ -849,7 +849,7 @@ export async function getServerSideProps(context) {
 
 可以看到，浏览器并没有调用`getRandomImg`，在请求的资源当中可以看到一个名为`randomImg.json`的文件，其中记录了该页面的props。
 
-![](/Users/liujingmin/Desktop/README/img/3.png)
+![](img/3.png)
 
 ### 如果页面本身就存在props传递，nextJS会如何处理？
 
@@ -979,11 +979,11 @@ export async function getServerSideProps(context) {
 
 Todo列表：
 
-![](/Users/liujingmin/Desktop/README/img/7.png)
+![](img/7.png)
 
 Task列表：
 
-![](/Users/liujingmin/Desktop/README/img/8.png)
+![](img/8.png)
 
 ## 2.数据库设计
 
@@ -995,11 +995,11 @@ Task列表：
 
 `tableList`:
 
-![](/Users/liujingmin/Desktop/README/img/10.png)
+![](img/10.png)
 
 `taskList`:
 
-![](/Users/liujingmin/Desktop/README/img/11.png)
+![](img/11.png)
 
 ## 3.查询接口开发
 
@@ -1175,7 +1175,7 @@ export async function getServerSideProps(context) {
 }
 ```
 
-![](/Users/liujingmin/Desktop/README/img/12.png)
+![](img/12.png)
 
 
 
@@ -1245,4 +1245,4 @@ export async function getServerSideProps(context) {
 }
 ```
 
-![](/Users/liujingmin/Desktop/README/img/13.png)
+![](img/13.png)
