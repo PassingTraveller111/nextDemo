@@ -1246,3 +1246,323 @@ export async function getServerSideProps(context) {
 ```
 
 ![](img/13.png)
+
+# 八、Next与中间件
+
+## 1.中间件是什么？
+
+在 Next.js 中，中间件（Middleware）是一段在服务器端运行的代码，它位于服务器接收请求和处理请求之间的位置。可以拦截传入的请求，并在将请求传递给页面或 API 路由进行处理之前，对请求进行检查、修改或者执行其他逻辑。
+
+一般可以用中间件实现诸如身份验证、日志记录、国际化等等功能。
+
+## 2.中间件的配置
+
+### 1）创建`middleware.js`
+
+与`pages`同级创建`middleware.js`/`middleware.ts`系统会自动识别为中间件代码。
+
+```
+- node_modules
+- pages
+- middleware.js
+......
+```
+
+在该文件下创建并导出的`middleware`函数则会被视为中间件入口。
+
+```js
+export function middleware(requst, res) {
+	......
+}
+```
+
+### 2)  中间件函数的参数
+
+中间件函数的主要参数为`request`是一个`NextRequest`对象。包含了关于传入请求的各种信息:
+
+- 请求 URL 相关信息
+  - 可以通过`nextUrl`属性访问请求的完整 URL 对象。例如，`request.nextUrl.pathname`用于获取请求路径部分，像`/product/123`这样的路径信息。`request.nextUrl.search`可以获取查询字符串部分，如`?category=electronics`。
+- 请求头信息
+  - 通过`headers`属性来访问请求头。例如，`request.headers.get('authorization')`可以获取`authorization`请求头的值，用于身份验证相关的中间件，检查用户是否提供了有效的认证令牌。
+- 请求方法相关信息
+  - 可以确定请求是`GET`、`POST`、`PUT`等方法。虽然在中间件中对请求方法的直接使用场景可能相对较少，但在某些需要根据请求方法来执行不同逻辑的情况下（如对`POST`请求进行额外的安全检查），可以通过`request.method`获取请求方法。
+
+### 3）中间件的路由识别
+
+在`nextjs`中默认所有的请求（包括静态资源的获取）都会经过中间件，有时候我们不希望所有的请求都经过我们的中间件，又或者希望特定的请求通过特定的中间件。这时候就需要通过路由识别对请求进行过滤。
+
+#### config进行全局过滤
+
+在`middleware.js`文件下，可以通过导出`config`实现路由过滤。以下是常见的三种过滤方式。会直接作用在`middleware`这个入口函数上，被过滤的请求就不会经过中间件。
+
+```js
+export const config = {
+    matcher: [
+        '/welcome', // 特定路径
+        '/b/:path*', // 前缀匹配
+        '/((?!api|_next/static|_next/image|favicon.ico).*)', // 正则表达式过滤内部请求、静态资源
+    ],
+};
+```
+
+#### middleware中通过条件语句进行过滤
+
+前面有提到，在`middleware`中可以通过`req.nextUrl`得到请求的`pathname`和`search`，通过这些参数，我们一样可以在`middleware`中实现路由的辨别，让特定的路径走特定的中间件。
+
+```js
+export function middleware(req) {
+    const { pathname, search } = req.nextUrl;
+    console.log('pathname', pathname);
+    console.log('search', search);
+    // 通过req.nextUrl.pathname获取访问路径，需要注意的是不是只有访问页面会经过中间件，各种系统资源/api也会。
+    // 不处理Next.js静态文件
+    if (pathname.startsWith('/_next') ||
+        pathname.startsWith('/static')
+    ) {
+        return NextResponse.next();
+    }
+    if (pathname.startsWith('/b')) { // 以/b为前缀
+        console.log('/b');
+        // return NextResponse.rewrite(new URL('/b', req.url)); // 重写，注意要return
+        // return NextResponse.redirect(new URL('/login', req.url)); // 重定向
+    }
+    if (pathname === '/b') { // 只有/b的能走
+        console.log('/b only');
+        middlewareB();
+    }
+}
+```
+
+## 3.中间件实现jwt
+
+中间件比较常见的用法，就是用于对请求进行鉴权，如果用户未登录，则重定向到登录界面。用户登录鉴权的实现常用`JWT`，下面我们就将实现一个用户登录的Demo。
+
+### 1） JWT（JSON Web Token）简介
+
+- JWT 是一种用于在各方之间安全地传输信息的开放标准。在 Next.js 应用中，通常用于用户认证和授权。它由三部分组成：头部（Header）、载荷（Payload）和签名（Signature）。头部包含令牌的类型（通常是 JWT）和所使用的签名算法（如 HMAC SHA256 或 RSA）；载荷包含一些用户相关的信息，如用户 ID、角色等；签名用于验证令牌的真实性。
+
+### 2） 安装依赖
+
+- 需要安装
+
+  ```
+  jsonwebtoken
+  ```
+
+  库来生成和验证 JWT。在 Next.js 项目的根目录下，通过以下命令安装：
+
+  ```bash
+  npm install jsonwebtoken
+  ```
+
+- 或者如果使用 Yarn 作为包管理器：
+
+  ```bash
+  yarn add jsonwebtoken
+  ```
+
+### 3）建立用户表
+
+在数据库中建立表`userList`，这里表建立的比较简单，只有三个字段。
+
+![](img/21.png)
+
+### 4）用户登录/注销API
+
+**用户登录：**
+
+在`login`api中，我们连接数据库以后，根据`username`进行查询，然后对查询到的密码进行校验，如果校验通过，则用jwt包生成token，并且保存到客户端的cookie当中（这里设置了有效时间为一天`Max-Age=86400`，在所有路径下都有效`Path=/`）。
+
+这里`jwt`的密钥保存在`lib/jwt.js`下。
+
+```js
+// pages/api/login.js
+import jwt from 'jsonwebtoken';
+import secretKey from "../../lib/jwt";
+import pool from '../../lib/db'
+
+export default async function handler(req, res) {
+    if (req.method === 'POST') {
+        const { username, password } = req.body;
+        const connection = await pool.getConnection();
+        const [rows, fields] = await connection.execute(`SELECT * FROM userList WHERE username = '${username}'`);
+        connection.release();
+        if (rows.length && rows[0].username === username && rows[0].password === password) {
+            const token = jwt.sign({ username }, secretKey, { expiresIn: '1h' });
+            res.setHeader('set-cookie', `token=${token}; Max-Age=86400; Path=/`); // 把token保存到用户端的cookie当中
+            res.status(200).json({ token, message: `登录成功` });
+        } else {
+            res.status(401).json({ message: '用户名或密码错误' });
+        }
+    } else {
+        res.status(405).json({ message: 'Method not allowed' });
+    }
+}
+```
+
+如果在浏览器端请求了这个接口并且通过验证，就可以看到`login.js`设置了cookie，并且在cookie当中也能找到token。
+
+![](img/22.png)
+
+![](img/23.png)
+
+**用户注销：**
+
+用户注销比较简单，把cookie中的token清除就行。
+
+```js
+// pages/api/logout.js
+
+export default async function handler(req, res) {
+    res.setHeader('Set-Cookie', `token=; Max-Age=0; Path=/;`); // 删除cookie
+    res.status(200);
+    res.end();
+}
+```
+
+### 5）JWT中间件
+
+在中间件，我们首先过滤掉不需要进行验证的请求。
+
+我们从cookie上取到`token`，并且用`jwt`进行验证（写到这里发现`jwt.verify`有一个模块在next环境下没法用，可以尝试用别的后端服务进行验证。这里检测到`token`就直接放行了）。如果验证失败，则重定向到`login`页面即可，在login页验证成功就直接跳转主页。
+
+```js
+import jwt from 'jsonwebtoken';
+import secretKey from "./lib/jwt";
+import { NextResponse } from 'next/server';
+
+async function jwtMiddleware(req) {
+    const { pathname, search } = req.nextUrl;
+    const token =  req.cookies.get('token')?.value ?? ''; // 从请求头中获取token
+    if (token) {
+        try {
+            // const decoded = jwt.verify(token, secretKey);
+            const decoded = 'jwt用的crypto模块在next的环境下没法用，这里直接通过';
+            if(!decoded && pathname !== '/login') return NextResponse.redirect(new URL('/login', req.url)); // 解码失败，重定向到login页
+            if(decoded && pathname === '/login') return NextResponse.redirect(new URL('/', req.url)); // 重定向到登录页
+        } catch (error) {
+            console.log(error);
+            if(pathname !== '/login') return NextResponse.redirect(new URL('/login', req.url));
+        }
+    } else {
+        if(pathname !== '/login') return NextResponse.redirect(new URL('/login', req.url));
+    }
+}
+const middlewareB = (req) => {
+    console.log('middlewareB');
+}
+
+export function middleware(req) {
+    const { pathname, search } = req.nextUrl;
+    return jwtMiddleware(req);
+}
+
+export const config = {
+    matcher: [
+        // '/welcome', // 特定路径
+        // '/b/:path*', // 前缀匹配
+        '/((?!api|_next/static|_next/image|favicon.ico).*)', // 正则表达式过滤内部请求、静态资源
+    ],
+};
+```
+
+### 6）客户端开发
+
+**login表单组件**：
+
+```jsx
+import React, { useState } from 'react';
+
+const LoginForm = (props) => {
+    const [username, setUsername] = useState('root');
+    const [password, setPassword] = useState('123456');
+    const { onLogin } = props;
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onLogin(username, password);
+    };
+    return (
+        <form onSubmit={handleSubmit}>
+            <label htmlFor="username">用户名：</label>
+            <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+            />
+            <label htmlFor="password">密码：</label>
+            <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="submit">登录</button>
+        </form>
+    );
+};
+
+export default LoginForm;
+```
+
+
+
+**login页面**：
+
+在`login`页面，我们发送login请求后，如果通过验证，就可以直接跳到主页。
+
+```jsx
+import React from 'react';
+import LoginForm from "../components/LoginForm/LoginForm";
+import axios from "axios";
+import { useRouter } from "next/router";
+
+export default () => {
+    const router = useRouter();
+    const login = async (username, password) => {
+        if (username === '' || password === '') {
+            alert('用户名和密码不能为空');
+            return;
+        }
+        console.log('login', username, password);
+        try {
+            const res = await axios.post('http://localhost:3000/api/login', {
+                username,
+                password,
+            })
+            console.log(res.data);
+            router.push('/');
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+    return <>
+        <h1>login Page</h1>
+        <LoginForm onLogin={login} />
+    </>;
+}
+```
+
+**主页：**
+
+在主页我们添加了一个退出登录的按钮，点击以后清除cookie并且跳转到login页面。
+
+```jsx
+import React from 'react';
+import Nav from '../components/Nav/nav.jsx';
+import axios from "axios";
+import {useRouter} from "next/router";
+
+export default () => {
+    const router = useRouter();
+    const logout = async () => {
+        const res = await axios.get('http://localhost:3000/api/logout');
+        router.push('/login'); // 跳转到login页面
+    }
+    return <>
+      <button onClick={logout}>退出登录</button>
+      <Nav/>
+    </>
+}
+```
