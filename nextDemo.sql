@@ -11,7 +11,7 @@
  Target Server Version : 90100 (9.1.0)
  File Encoding         : 65001
 
- Date: 06/01/2025 14:24:23
+ Date: 07/01/2025 21:48:59
 */
 
 SET NAMES utf8mb4;
@@ -1074,6 +1074,25 @@ INSERT INTO `taskList` (`task_id`, `table_id`, `task_title`, `task_content`, `ta
 INSERT INTO `taskList` (`task_id`, `table_id`, `task_title`, `task_content`, `task_status`, `create_time`, `deadline`) VALUES (998, 19, '                    ', 'Remember that failure is an event, not a person.', 'pending', '2022-02-11 00:59:26', '2008-09-13 09:31:34');
 INSERT INTO `taskList` (`task_id`, `table_id`, `task_title`, `task_content`, `task_status`, `create_time`, `deadline`) VALUES (999, 17, '                    ', 'I destroy my enemies when I make them my friends.', 'fail', '2017-10-27 17:05:27', '2013-08-20 06:59:46');
 INSERT INTO `taskList` (`task_id`, `table_id`, `task_title`, `task_content`, `task_status`, `create_time`, `deadline`) VALUES (1000, 4, '                    ', 'Navicat Monitor is a safe, simple and agentless remote server monitoring tool that                  ', 'success', '2012-03-30 10:53:52', '2017-07-09 12:28:41');
+COMMIT;
+
+-- ----------------------------
+-- Table structure for userList
+-- ----------------------------
+DROP TABLE IF EXISTS `userList`;
+CREATE TABLE `userList` (
+  `user_id` int NOT NULL,
+  `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`user_id`,`username`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ----------------------------
+-- Records of userList
+-- ----------------------------
+BEGIN;
+INSERT INTO `userList` (`user_id`, `username`, `password`) VALUES (1, 'root', '123456');
+INSERT INTO `userList` (`user_id`, `username`, `password`) VALUES (2, 'lulu', '11111');
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
