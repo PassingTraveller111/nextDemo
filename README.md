@@ -552,12 +552,12 @@ export default () => {
 
 ## 1.安装必要的库
 
-- 首先需要安装  `react-redux`、`@redux/toolkit`
+- 首先需要安装  `react-redux`、`@reduxjs/toolkit`
 
   。可以使用以下命令进行安装：
 
   ```plaintext
-  npm install react-redux @redux/toolkit
+  npm install react-redux @reduxjs/toolkit
   ```
 
 ## 2. 目录结构
